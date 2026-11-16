@@ -1,0 +1,19 @@
+[project]
+name = "revops-lakehouse-ontology"
+version = "0.1.0"
+description = "Zero-ETL GTM Lakehouse Ontology with Apache Iceberg, DuckDB, and AI Agents"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pyiceberg[sql-sqlite]>=0.8.0",
+    "pyiceberg-core>=0.11.0",
+    "duckdb>=1.0.0",
+    "pyarrow>=15.0.0",
+    "faker>=24.0.0",
+    "pydantic>=2.0.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
