@@ -1,412 +1,361 @@
-@prefix : <http://revops.org/ontology#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix revops: <http://revops.org/ontology#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 <http://revops.org/ontology> a owl:Ontology ;
     rdfs:label "RevOpsGTMOntology" ;
     rdfs:comment "Zero-ETL RevOps Knowledge Graph mapping CRM, Marketing, and Product Telemetry." .
 
-# ===================================================================
-# Classes & Taxonomies
-# ===================================================================
-:Account a owl:Class ;
-    rdfs:label "Account" ;
-    rdfs:comment "Organization / Customer / Prospect entity in the GTM lifecycle." .
-
-:EnterpriseAccount a owl:Class ;
-    rdfs:subClassOf :Account ;
+revops:EnterpriseAccount a owl:Class ;
     rdfs:label "EnterpriseAccount" ;
-    rdfs:comment "Enterprise tier accounts (ARR > $150k or employee count > 1000)" .
+    rdfs:comment "Enterprise tier accounts (ARR > $150k or employee count > 1000)" ;
+    rdfs:subClassOf revops:Account .
 
-:MidMarketAccount a owl:Class ;
-    rdfs:subClassOf :Account ;
-    rdfs:label "MidMarketAccount" ;
-    rdfs:comment "Mid-market tier accounts" .
-
-:SMBAccount a owl:Class ;
-    rdfs:subClassOf :Account ;
-    rdfs:label "SMBAccount" ;
-    rdfs:comment "Small-to-medium business tier accounts" .
-
-:Contact a owl:Class ;
-    rdfs:label "Contact" ;
-    rdfs:comment "Business contact / persona associated with an Account." .
-
-:Opportunity a owl:Class ;
-    rdfs:label "Opportunity" ;
-    rdfs:comment "CRM sales opportunity / pipeline deal." .
-
-:ExpansionDeal a owl:Class ;
-    rdfs:subClassOf :Opportunity ;
+revops:ExpansionDeal a owl:Class ;
     rdfs:label "ExpansionDeal" ;
-    rdfs:comment "Upsell / add-on deal on existing customer accounts" .
+    rdfs:comment "Upsell / add-on deal on existing customer accounts" ;
+    rdfs:subClassOf revops:Opportunity .
 
-:OpenExpansionDeal a owl:Class ;
-    rdfs:subClassOf :Opportunity ;
-    rdfs:label "OpenExpansionDeal" ;
-    rdfs:comment "Active in-flight expansion opportunity" .
+revops:MidMarketAccount a owl:Class ;
+    rdfs:label "MidMarketAccount" ;
+    rdfs:comment "Mid-market tier accounts" ;
+    rdfs:subClassOf revops:Account .
 
-:NewBusinessDeal a owl:Class ;
-    rdfs:subClassOf :Opportunity ;
+revops:NewBusinessDeal a owl:Class ;
     rdfs:label "NewBusinessDeal" ;
-    rdfs:comment "Initial contract acquisition deal" .
+    rdfs:comment "Initial contract acquisition deal" ;
+    rdfs:subClassOf revops:Opportunity .
 
-:RenewalDeal a owl:Class ;
-    rdfs:subClassOf :Opportunity ;
+revops:OpenExpansionDeal a owl:Class ;
+    rdfs:label "OpenExpansionDeal" ;
+    rdfs:comment "Active in-flight expansion opportunity" ;
+    rdfs:subClassOf revops:Opportunity .
+
+revops:RenewalDeal a owl:Class ;
     rdfs:label "RenewalDeal" ;
-    rdfs:comment "Subscription renewal deal" .
+    rdfs:comment "Subscription renewal deal" ;
+    rdfs:subClassOf revops:Opportunity .
 
-:Campaign a owl:Class ;
-    rdfs:label "Campaign" ;
-    rdfs:comment "Marketing campaign across digital, outbound, and event channels." .
+revops:SMBAccount a owl:Class ;
+    rdfs:label "SMBAccount" ;
+    rdfs:comment "Small-to-medium business tier accounts" ;
+    rdfs:subClassOf revops:Account .
 
-:CampaignDailyCost a owl:Class ;
+revops:account_id a owl:DatatypeProperty ;
+    rdfs:comment "Foreign key to Account",
+        "Unique identifier for Account" ;
+    rdfs:domain revops:Account,
+        revops:Contact,
+        revops:Opportunity,
+        revops:ProductEvent ;
+    rdfs:range xsd:string .
+
+revops:amount a owl:DatatypeProperty ;
+    rdfs:comment "Deal value in USD" ;
+    rdfs:domain revops:Opportunity ;
+    rdfs:range xsd:decimal .
+
+revops:arr a owl:DatatypeProperty ;
+    rdfs:comment "Annual Recurring Revenue in USD" ;
+    rdfs:domain revops:Account ;
+    rdfs:range xsd:decimal .
+
+revops:attributedToCampaign a owl:ObjectProperty ;
+    rdfs:label "attributedToCampaign" ;
+    rdfs:comment "Links a touchpoint to its source marketing campaign" ;
+    rdfs:domain revops:CampaignTouch ;
+    rdfs:range revops:Campaign .
+
+revops:budget a owl:DatatypeProperty ;
+    rdfs:comment "Allocated budget in USD" ;
+    rdfs:domain revops:Campaign ;
+    rdfs:range xsd:decimal .
+
+revops:campaign_id a owl:DatatypeProperty ;
+    rdfs:comment "Foreign key to Campaign",
+        "Unique campaign identifier" ;
+    rdfs:domain revops:Campaign,
+        revops:CampaignDailyCost,
+        revops:CampaignTouch ;
+    rdfs:range xsd:string .
+
+revops:channel a owl:DatatypeProperty ;
+    rdfs:comment "Paid Search, Webinar, Email, Outbound, Conference",
+        "Touch channel" ;
+    rdfs:domain revops:Campaign,
+        revops:CampaignTouch ;
+    rdfs:range xsd:string .
+
+revops:clicks a owl:DatatypeProperty ;
+    rdfs:comment "Daily ad clicks" ;
+    rdfs:domain revops:CampaignDailyCost ;
+    rdfs:range xsd:integer .
+
+revops:close_date a owl:DatatypeProperty ;
+    rdfs:comment "Target or actual close date" ;
+    rdfs:domain revops:Opportunity ;
+    rdfs:range xsd:date .
+
+revops:contact_id a owl:DatatypeProperty ;
+    rdfs:comment "Foreign key to Contact",
+        "Unique identifier for Contact" ;
+    rdfs:domain revops:CampaignTouch,
+        revops:Contact ;
+    rdfs:range xsd:string .
+
+revops:cost a owl:DatatypeProperty ;
+    rdfs:comment "Daily spend in USD" ;
+    rdfs:domain revops:CampaignDailyCost ;
+    rdfs:range xsd:decimal .
+
+revops:cost_id a owl:DatatypeProperty ;
+    rdfs:comment "Daily cost record identifier" ;
+    rdfs:domain revops:CampaignDailyCost ;
+    rdfs:range xsd:string .
+
+revops:created_at a owl:DatatypeProperty ;
+    rdfs:comment "Account creation timestamp",
+        "Contact creation timestamp",
+        "Creation timestamp",
+        "Opportunity creation timestamp",
+        "Record timestamp" ;
+    rdfs:domain revops:Account,
+        revops:Campaign,
+        revops:CampaignDailyCost,
+        revops:Contact,
+        revops:Opportunity ;
+    rdfs:range xsd:dateTimeStamp .
+
+revops:date a owl:DatatypeProperty ;
+    rdfs:comment "Calendar spend date" ;
+    rdfs:domain revops:CampaignDailyCost ;
+    rdfs:range xsd:date .
+
+revops:deal_id a owl:DatatypeProperty ;
+    rdfs:comment "Unique deal identifier" ;
+    rdfs:domain revops:Opportunity ;
+    rdfs:range xsd:string .
+
+revops:deal_name a owl:DatatypeProperty ;
+    rdfs:comment "Opportunity deal name" ;
+    rdfs:domain revops:Opportunity ;
+    rdfs:range xsd:string .
+
+revops:deal_type a owl:DatatypeProperty ;
+    rdfs:comment "New Business, Expansion, Renewal" ;
+    rdfs:domain revops:Opportunity ;
+    rdfs:range xsd:string .
+
+revops:domain a owl:DatatypeProperty ;
+    rdfs:comment "Company domain" ;
+    rdfs:domain revops:Account ;
+    rdfs:range xsd:string .
+
+revops:email a owl:DatatypeProperty ;
+    rdfs:comment "Work email address" ;
+    rdfs:domain revops:Contact ;
+    rdfs:range xsd:string .
+
+revops:end_date a owl:DatatypeProperty ;
+    rdfs:comment "Campaign conclusion date" ;
+    rdfs:domain revops:Campaign ;
+    rdfs:range xsd:date .
+
+revops:event_id a owl:DatatypeProperty ;
+    rdfs:comment "Event identifier" ;
+    rdfs:domain revops:ProductEvent ;
+    rdfs:range xsd:string .
+
+revops:event_name a owl:DatatypeProperty ;
+    rdfs:comment "login, dashboard_view, report_exported, etc." ;
+    rdfs:domain revops:ProductEvent ;
+    rdfs:range xsd:string .
+
+revops:event_time a owl:DatatypeProperty ;
+    rdfs:comment "Event timestamp" ;
+    rdfs:domain revops:ProductEvent ;
+    rdfs:range xsd:dateTimeStamp .
+
+revops:feature_name a owl:DatatypeProperty ;
+    rdfs:comment "Product feature tag" ;
+    rdfs:domain revops:ProductEvent ;
+    rdfs:range xsd:string .
+
+revops:first_name a owl:DatatypeProperty ;
+    rdfs:comment "First name" ;
+    rdfs:domain revops:Contact ;
+    rdfs:range xsd:string .
+
+revops:hasContact a owl:ObjectProperty ;
+    rdfs:label "hasContact" ;
+    rdfs:comment "Connects an Account to its organizational contacts" ;
+    rdfs:domain revops:Account ;
+    rdfs:range revops:Contact .
+
+revops:hasOpportunity a owl:ObjectProperty ;
+    rdfs:label "hasOpportunity" ;
+    rdfs:comment "Connects an Account to its CRM sales opportunities" ;
+    rdfs:domain revops:Account ;
+    rdfs:range revops:Opportunity .
+
+revops:hasTelemetryEvent a owl:ObjectProperty ;
+    rdfs:label "hasTelemetryEvent" ;
+    rdfs:comment "Links granular product usage telemetry to an Account" ;
+    rdfs:domain revops:Account ;
+    rdfs:range revops:ProductEvent .
+
+revops:hasTouchpoint a owl:ObjectProperty ;
+    rdfs:label "hasTouchpoint" ;
+    rdfs:comment "Connects a Contact to multi-touch marketing interactions" ;
+    rdfs:domain revops:Contact ;
+    rdfs:range revops:CampaignTouch .
+
+revops:health_score a owl:DatatypeProperty ;
+    rdfs:comment "Account health score (0-100)" ;
+    rdfs:domain revops:Account ;
+    rdfs:range xsd:integer .
+
+revops:impressions a owl:DatatypeProperty ;
+    rdfs:comment "Daily ad impressions" ;
+    rdfs:domain revops:CampaignDailyCost ;
+    rdfs:range xsd:integer .
+
+revops:industry a owl:DatatypeProperty ;
+    rdfs:comment "Industry vertical" ;
+    rdfs:domain revops:Account ;
+    rdfs:range xsd:string .
+
+revops:is_closed a owl:DatatypeProperty ;
+    rdfs:comment "Whether deal is finalized" ;
+    rdfs:domain revops:Opportunity ;
+    rdfs:range xsd:boolean .
+
+revops:is_primary a owl:DatatypeProperty ;
+    rdfs:comment "Primary contact flag" ;
+    rdfs:domain revops:Contact ;
+    rdfs:range xsd:boolean .
+
+revops:is_won a owl:DatatypeProperty ;
+    rdfs:comment "Whether deal is won" ;
+    rdfs:domain revops:Opportunity ;
+    rdfs:range xsd:boolean .
+
+revops:last_name a owl:DatatypeProperty ;
+    rdfs:comment "Last name" ;
+    rdfs:domain revops:Contact ;
+    rdfs:range xsd:string .
+
+revops:lifecycle_stage a owl:DatatypeProperty ;
+    rdfs:comment "Prospect, Customer, Churned" ;
+    rdfs:domain revops:Account ;
+    rdfs:range xsd:string .
+
+revops:name a owl:DatatypeProperty ;
+    rdfs:comment "Account / Company name",
+        "Campaign name" ;
+    rdfs:domain revops:Account,
+        revops:Campaign ;
+    rdfs:range xsd:string .
+
+revops:num_employees a owl:DatatypeProperty ;
+    rdfs:comment "Number of employees" ;
+    rdfs:domain revops:Account ;
+    rdfs:range xsd:integer .
+
+revops:role a owl:DatatypeProperty ;
+    rdfs:comment "Decision Maker, Champion, Influencer, End User" ;
+    rdfs:domain revops:Contact ;
+    rdfs:range xsd:string .
+
+revops:session_duration_seconds a owl:DatatypeProperty ;
+    rdfs:comment "Duration of session" ;
+    rdfs:domain revops:ProductEvent ;
+    rdfs:range xsd:integer .
+
+revops:stage a owl:DatatypeProperty ;
+    rdfs:comment "Pipeline stage (Prospecting ... Closed Won)" ;
+    rdfs:domain revops:Opportunity ;
+    rdfs:range xsd:string .
+
+revops:start_date a owl:DatatypeProperty ;
+    rdfs:comment "Campaign launch date" ;
+    rdfs:domain revops:Campaign ;
+    rdfs:range xsd:date .
+
+revops:status a owl:DatatypeProperty ;
+    rdfs:comment "Active, Paused, Completed, Planned",
+        "Lifecycle status: Lead, MQL, SQL, Opportunity" ;
+    rdfs:domain revops:Campaign,
+        revops:Contact ;
+    rdfs:range xsd:string .
+
+revops:tier a owl:DatatypeProperty ;
+    rdfs:comment "Enterprise, Mid-Market, or SMB" ;
+    rdfs:domain revops:Account ;
+    rdfs:range xsd:string .
+
+revops:title a owl:DatatypeProperty ;
+    rdfs:comment "Job title" ;
+    rdfs:domain revops:Contact ;
+    rdfs:range xsd:string .
+
+revops:touch_id a owl:DatatypeProperty ;
+    rdfs:comment "Touchpoint identifier" ;
+    rdfs:domain revops:CampaignTouch ;
+    rdfs:range xsd:string .
+
+revops:touch_time a owl:DatatypeProperty ;
+    rdfs:comment "Exact interaction timestamp" ;
+    rdfs:domain revops:CampaignTouch ;
+    rdfs:range xsd:dateTimeStamp .
+
+revops:touch_type a owl:DatatypeProperty ;
+    rdfs:comment "First Touch, Lead Creation, Opportunity Influence" ;
+    rdfs:domain revops:CampaignTouch ;
+    rdfs:range xsd:string .
+
+revops:tracksDailyCost a owl:ObjectProperty ;
+    rdfs:label "tracksDailyCost" ;
+    rdfs:comment "Associates daily spend records with a campaign" ;
+    rdfs:domain revops:Campaign ;
+    rdfs:range revops:CampaignDailyCost .
+
+revops:type a owl:DatatypeProperty ;
+    rdfs:comment "Acquisition, Retention, Expansion, Brand" ;
+    rdfs:domain revops:Campaign ;
+    rdfs:range xsd:string .
+
+revops:user_id a owl:DatatypeProperty ;
+    rdfs:comment "Active user identifier" ;
+    rdfs:domain revops:ProductEvent ;
+    rdfs:range xsd:string .
+
+revops:CampaignDailyCost a owl:Class ;
     rdfs:label "CampaignDailyCost" ;
     rdfs:comment "Daily marketing spend and engagement telemetry per campaign." .
 
-:CampaignTouch a owl:Class ;
+revops:CampaignTouch a owl:Class ;
     rdfs:label "CampaignTouch" ;
     rdfs:comment "Multi-touch marketing interaction attributed to a Contact." .
 
-:ProductEvent a owl:Class ;
+revops:ProductEvent a owl:Class ;
     rdfs:label "ProductEvent" ;
     rdfs:comment "Granular SaaS product usage telemetry for WAU and engagement." .
 
-# ===================================================================
-# Object Properties (Relationships)
-# ===================================================================
-:hasContact a owl:ObjectProperty ;
-    rdfs:domain :Account ;
-    rdfs:range :Contact ;
-    rdfs:label "hasContact" ;
-    rdfs:comment "Connects an Account to its organizational contacts" .
+revops:Campaign a owl:Class ;
+    rdfs:label "Campaign" ;
+    rdfs:comment "Marketing campaign across digital, outbound, and event channels." .
 
-:hasOpportunity a owl:ObjectProperty ;
-    rdfs:domain :Account ;
-    rdfs:range :Opportunity ;
-    rdfs:label "hasOpportunity" ;
-    rdfs:comment "Connects an Account to its CRM sales opportunities" .
+revops:Contact a owl:Class ;
+    rdfs:label "Contact" ;
+    rdfs:comment "Business contact / persona associated with an Account." .
 
-:hasTouchpoint a owl:ObjectProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range :CampaignTouch ;
-    rdfs:label "hasTouchpoint" ;
-    rdfs:comment "Connects a Contact to multi-touch marketing interactions" .
+revops:Opportunity a owl:Class ;
+    rdfs:label "Opportunity" ;
+    rdfs:comment "CRM sales opportunity / pipeline deal." .
 
-:attributedToCampaign a owl:ObjectProperty ;
-    rdfs:domain :CampaignTouch ;
-    rdfs:range :Campaign ;
-    rdfs:label "attributedToCampaign" ;
-    rdfs:comment "Links a touchpoint to its source marketing campaign" .
+revops:Account a owl:Class ;
+    rdfs:label "Account" ;
+    rdfs:comment "Organization / Customer / Prospect entity in the GTM lifecycle." .
 
-:tracksDailyCost a owl:ObjectProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range :CampaignDailyCost ;
-    rdfs:label "tracksDailyCost" ;
-    rdfs:comment "Associates daily spend records with a campaign" .
-
-:hasTelemetryEvent a owl:ObjectProperty ;
-    rdfs:domain :Account ;
-    rdfs:range :ProductEvent ;
-    rdfs:label "hasTelemetryEvent" ;
-    rdfs:comment "Links granular product usage telemetry to an Account" .
-
-# ===================================================================
-# Datatype Properties
-# ===================================================================
-:account_id a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Unique identifier for Account" .
-
-:name a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Account / Company name" .
-
-:domain a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Company domain" .
-
-:tier a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Enterprise, Mid-Market, or SMB" .
-
-:industry a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Industry vertical" .
-
-:arr a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:decimal ;
-    rdfs:comment "Annual Recurring Revenue in USD" .
-
-:health_score a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "Account health score (0-100)" .
-
-:lifecycle_stage a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Prospect, Customer, Churned" .
-
-:num_employees a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "Number of employees" .
-
-:created_at a owl:DatatypeProperty ;
-    rdfs:domain :Account ;
-    rdfs:range xsd:dateTimeStamp ;
-    rdfs:comment "Account creation timestamp" .
-
-:contact_id a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Unique identifier for Contact" .
-
-:account_id a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Foreign key to Account" .
-
-:email a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Work email address" .
-
-:first_name a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:string ;
-    rdfs:comment "First name" .
-
-:last_name a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Last name" .
-
-:title a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Job title" .
-
-:role a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Decision Maker, Champion, Influencer, End User" .
-
-:is_primary a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:boolean ;
-    rdfs:comment "Primary contact flag" .
-
-:status a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Lifecycle status: Lead, MQL, SQL, Opportunity" .
-
-:created_at a owl:DatatypeProperty ;
-    rdfs:domain :Contact ;
-    rdfs:range xsd:dateTimeStamp ;
-    rdfs:comment "Contact creation timestamp" .
-
-:deal_id a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Unique deal identifier" .
-
-:account_id a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Foreign key to Account" .
-
-:deal_name a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Opportunity deal name" .
-
-:deal_type a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:string ;
-    rdfs:comment "New Business, Expansion, Renewal" .
-
-:stage a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Pipeline stage (Prospecting ... Closed Won)" .
-
-:amount a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:decimal ;
-    rdfs:comment "Deal value in USD" .
-
-:close_date a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:date ;
-    rdfs:comment "Target or actual close date" .
-
-:is_closed a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:boolean ;
-    rdfs:comment "Whether deal is finalized" .
-
-:is_won a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:boolean ;
-    rdfs:comment "Whether deal is won" .
-
-:created_at a owl:DatatypeProperty ;
-    rdfs:domain :Opportunity ;
-    rdfs:range xsd:dateTimeStamp ;
-    rdfs:comment "Opportunity creation timestamp" .
-
-:campaign_id a owl:DatatypeProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Unique campaign identifier" .
-
-:name a owl:DatatypeProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Campaign name" .
-
-:channel a owl:DatatypeProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Paid Search, Webinar, Email, Outbound, Conference" .
-
-:type a owl:DatatypeProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Acquisition, Retention, Expansion, Brand" .
-
-:status a owl:DatatypeProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Active, Paused, Completed, Planned" .
-
-:budget a owl:DatatypeProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range xsd:decimal ;
-    rdfs:comment "Allocated budget in USD" .
-
-:start_date a owl:DatatypeProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range xsd:date ;
-    rdfs:comment "Campaign launch date" .
-
-:end_date a owl:DatatypeProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range xsd:date ;
-    rdfs:comment "Campaign conclusion date" .
-
-:created_at a owl:DatatypeProperty ;
-    rdfs:domain :Campaign ;
-    rdfs:range xsd:dateTimeStamp ;
-    rdfs:comment "Creation timestamp" .
-
-:cost_id a owl:DatatypeProperty ;
-    rdfs:domain :CampaignDailyCost ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Daily cost record identifier" .
-
-:campaign_id a owl:DatatypeProperty ;
-    rdfs:domain :CampaignDailyCost ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Foreign key to Campaign" .
-
-:date a owl:DatatypeProperty ;
-    rdfs:domain :CampaignDailyCost ;
-    rdfs:range xsd:date ;
-    rdfs:comment "Calendar spend date" .
-
-:cost a owl:DatatypeProperty ;
-    rdfs:domain :CampaignDailyCost ;
-    rdfs:range xsd:decimal ;
-    rdfs:comment "Daily spend in USD" .
-
-:impressions a owl:DatatypeProperty ;
-    rdfs:domain :CampaignDailyCost ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "Daily ad impressions" .
-
-:clicks a owl:DatatypeProperty ;
-    rdfs:domain :CampaignDailyCost ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "Daily ad clicks" .
-
-:created_at a owl:DatatypeProperty ;
-    rdfs:domain :CampaignDailyCost ;
-    rdfs:range xsd:dateTimeStamp ;
-    rdfs:comment "Record timestamp" .
-
-:touch_id a owl:DatatypeProperty ;
-    rdfs:domain :CampaignTouch ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Touchpoint identifier" .
-
-:contact_id a owl:DatatypeProperty ;
-    rdfs:domain :CampaignTouch ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Foreign key to Contact" .
-
-:campaign_id a owl:DatatypeProperty ;
-    rdfs:domain :CampaignTouch ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Foreign key to Campaign" .
-
-:channel a owl:DatatypeProperty ;
-    rdfs:domain :CampaignTouch ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Touch channel" .
-
-:touch_type a owl:DatatypeProperty ;
-    rdfs:domain :CampaignTouch ;
-    rdfs:range xsd:string ;
-    rdfs:comment "First Touch, Lead Creation, Opportunity Influence" .
-
-:touch_time a owl:DatatypeProperty ;
-    rdfs:domain :CampaignTouch ;
-    rdfs:range xsd:dateTimeStamp ;
-    rdfs:comment "Exact interaction timestamp" .
-
-:event_id a owl:DatatypeProperty ;
-    rdfs:domain :ProductEvent ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Event identifier" .
-
-:account_id a owl:DatatypeProperty ;
-    rdfs:domain :ProductEvent ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Foreign key to Account" .
-
-:user_id a owl:DatatypeProperty ;
-    rdfs:domain :ProductEvent ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Active user identifier" .
-
-:event_name a owl:DatatypeProperty ;
-    rdfs:domain :ProductEvent ;
-    rdfs:range xsd:string ;
-    rdfs:comment "login, dashboard_view, report_exported, etc." .
-
-:feature_name a owl:DatatypeProperty ;
-    rdfs:domain :ProductEvent ;
-    rdfs:range xsd:string ;
-    rdfs:comment "Product feature tag" .
-
-:session_duration_seconds a owl:DatatypeProperty ;
-    rdfs:domain :ProductEvent ;
-    rdfs:range xsd:integer ;
-    rdfs:comment "Duration of session" .
-
-:event_time a owl:DatatypeProperty ;
-    rdfs:domain :ProductEvent ;
-    rdfs:range xsd:dateTimeStamp ;
-    rdfs:comment "Event timestamp" .

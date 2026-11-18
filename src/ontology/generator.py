@@ -1,19 +1,28 @@
 """Generator that compiles declarative revops_ontology.yaml into
 
-W3C OWL/Turtle (.ttl), Ontop OBDA (.obda), and W3C R2RML (.r2rml.ttl).
+W3C OWL/Turtle (.ttl), Ontop OBDA (.obda), and W3C R2RML (.r2rml.ttl)
+using rdflib's native Graph model and W3C Turtle serializers.
+Handles arbitrary additions/edits to classes, properties, subclasses, and relationships.
 """
 
+import sys
 from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from typing import Optional
 import yaml
 import rdflib
-from rdflib import Graph
+from rdflib import BNode, Graph, Literal, Namespace, URIRef
+from rdflib.namespace import OWL, RDF, RDFS, XSD
 
 from src.ontology.models import OntologySpec
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_YAML_PATH = PROJECT_ROOT / "ontology" / "revops_ontology.yaml"
 OUTPUT_DIR = PROJECT_ROOT / "ontology"
+
+RR = Namespace("http://www.w3.org/ns/r2rml#")
 
 
 def load_ontology_spec(yaml_path: Optional[Path] = None) -> OntologySpec:
@@ -25,12 +34,13 @@ def load_ontology_spec(yaml_path: Optional[Path] = None) -> OntologySpec:
 
 
 class OntologyArtifactGenerator:
-    """Generates standard W3C Turtle, Ontop OBDA, and R2RML mapping files."""
+    """Generates standard W3C Turtle, Ontop OBDA, and R2RML mapping files using rdflib."""
 
     def __init__(self, spec: OntologySpec):
         self.spec = spec
         self.ns = spec.ontology.namespace
         self.prefix = spec.ontology.prefix
+        self.REV = Namespace(self.ns)
 
     def generate_all(self, output_dir: Optional[Path] = None) -> dict:
         """Generate all 3 ontology artifacts and validate RDF syntax."""
@@ -41,14 +51,17 @@ class OntologyArtifactGenerator:
         obda_path = out_dir / "mappings.obda"
         r2rml_path = out_dir / "mappings.r2rml.ttl"
 
+        # 1. Generate OWL/Turtle using native rdflib Graph
         ttl_content = self.generate_owl_turtle()
         with open(ttl_path, "w", encoding="utf-8") as f:
             f.write(ttl_content)
 
+        # 2. Generate Ontop OBDA (proprietary Ontop mapping format)
         obda_content = self.generate_ontop_obda()
         with open(obda_path, "w", encoding="utf-8") as f:
             f.write(obda_content)
 
+        # 3. Generate W3C R2RML using native rdflib Graph
         r2rml_content = self.generate_r2rml()
         with open(r2rml_path, "w", encoding="utf-8") as f:
             f.write(r2rml_content)
@@ -58,87 +71,175 @@ class OntologyArtifactGenerator:
         g.parse(ttl_path, format="turtle")
         triple_count = len(g)
 
+        rg = Graph()
+        rg.parse(r2rml_path, format="turtle")
+        r2rml_triple_count = len(rg)
+
         return {
             "turtle_file": ttl_path,
             "obda_file": obda_path,
             "r2rml_file": r2rml_path,
             "validated_triples": triple_count,
+            "r2rml_triples": r2rml_triple_count,
         }
 
     # -----------------------------------------------------------------------
-    # 1. W3C OWL / Turtle Generator
+    # 1. W3C OWL / Turtle Generator (via rdflib.Graph)
     # -----------------------------------------------------------------------
     def generate_owl_turtle(self) -> str:
-        lines = [
-            f"@prefix : <{self.ns}> .",
-            "@prefix owl: <http://www.w3.org/2002/07/owl#> .",
-            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
-            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
-            "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
-            "",
-            f"<{self.ns.rstrip('#')}> a owl:Ontology ;",
-            f'    rdfs:label "{self.spec.ontology.name}" ;',
-            f'    rdfs:comment "{self.spec.ontology.description}" .',
-            "",
-            "# ===================================================================",
-            "# Classes & Taxonomies",
-            "# ===================================================================",
-        ]
+        """Construct the formal OWL/RDF ontology using native rdflib Graph primitives."""
+        g = Graph()
+        g.bind(self.prefix, self.REV)
+        g.bind("owl", OWL)
+        g.bind("rdfs", RDFS)
+        g.bind("xsd", XSD)
 
-        # Classes & Subclasses
+        # Ontology metadata
+        onto_uri = URIRef(self.ns.rstrip("#"))
+        g.add((onto_uri, RDF.type, OWL.Ontology))
+        g.add((onto_uri, RDFS.label, Literal(self.spec.ontology.name)))
+        g.add((onto_uri, RDFS.comment, Literal(self.spec.ontology.description)))
+
+        # Classes and Subclasses
         for class_name, cdef in self.spec.classes.items():
-            lines.append(f":{class_name} a owl:Class ;")
-            lines.append(f'    rdfs:label "{class_name}" ;')
-            lines.append(f'    rdfs:comment "{cdef.description}" .')
-            lines.append("")
+            cls_uri = self.REV[class_name]
+            g.add((cls_uri, RDF.type, OWL.Class))
+            g.add((cls_uri, RDFS.label, Literal(class_name)))
+            g.add((cls_uri, RDFS.comment, Literal(cdef.description)))
 
             for sub_name, sdef in cdef.subclasses.items():
-                lines.append(f":{sub_name} a owl:Class ;")
-                lines.append(f"    rdfs:subClassOf :{class_name} ;")
-                lines.append(f'    rdfs:label "{sub_name}" ;')
-                lines.append(f'    rdfs:comment "{sdef.doc}" .')
-                lines.append("")
+                sub_uri = self.REV[sub_name]
+                g.add((sub_uri, RDF.type, OWL.Class))
+                g.add((sub_uri, RDFS.subClassOf, cls_uri))
+                g.add((sub_uri, RDFS.label, Literal(sub_name)))
+                g.add((sub_uri, RDFS.comment, Literal(sdef.doc)))
 
-        lines.append("# ===================================================================")
-        lines.append("# Object Properties (Relationships)")
-        lines.append("# ===================================================================")
-
+        # Object Properties (Relationships)
         for rel_name, rdef in self.spec.relationships.items():
-            lines.append(f":{rel_name} a owl:ObjectProperty ;")
-            lines.append(f"    rdfs:domain :{rdef.source} ;")
-            lines.append(f"    rdfs:range :{rdef.target} ;")
-            lines.append(f'    rdfs:label "{rel_name}" ;')
-            lines.append(f'    rdfs:comment "{rdef.doc}" .')
-            lines.append("")
+            rel_uri = self.REV[rel_name]
+            g.add((rel_uri, RDF.type, OWL.ObjectProperty))
+            if rdef.source in self.spec.classes:
+                g.add((rel_uri, RDFS.domain, self.REV[rdef.source]))
+            if rdef.target in self.spec.classes:
+                g.add((rel_uri, RDFS.range, self.REV[rdef.target]))
+            g.add((rel_uri, RDFS.label, Literal(rel_name)))
+            g.add((rel_uri, RDFS.comment, Literal(rdef.doc)))
 
-        lines.append("# ===================================================================")
-        lines.append("# Datatype Properties")
-        lines.append("# ===================================================================")
-
+        # Datatype Properties
         type_mapping = {
-            "string": "xsd:string",
-            "integer": "xsd:integer",
-            "decimal": "xsd:decimal",
-            "boolean": "xsd:boolean",
-            "date": "xsd:date",
-            "timestamptz": "xsd:dateTimeStamp",
+            "string": XSD.string,
+            "integer": XSD.integer,
+            "int": XSD.integer,
+            "decimal": XSD.decimal,
+            "float": XSD.decimal,
+            "double": XSD.decimal,
+            "boolean": XSD.boolean,
+            "bool": XSD.boolean,
+            "date": XSD.date,
+            "timestamptz": XSD.dateTimeStamp,
+            "datetime": XSD.dateTime,
         }
 
         for class_name, cdef in self.spec.classes.items():
             for prop_name, pdef in cdef.properties.items():
-                xsd_type = type_mapping.get(pdef.type, "xsd:string")
-                lines.append(f":{prop_name} a owl:DatatypeProperty ;")
-                lines.append(f"    rdfs:domain :{class_name} ;")
-                lines.append(f"    rdfs:range {xsd_type} ;")
-                lines.append(f'    rdfs:comment "{pdef.doc}" .')
-                lines.append("")
+                prop_uri = self.REV[prop_name]
+                xsd_type = type_mapping.get(pdef.type.lower(), XSD.string)
+                g.add((prop_uri, RDF.type, OWL.DatatypeProperty))
+                g.add((prop_uri, RDFS.domain, self.REV[class_name]))
+                g.add((prop_uri, RDFS.range, xsd_type))
+                g.add((prop_uri, RDFS.comment, Literal(pdef.doc)))
 
-        return "\n".join(lines)
+        # Serialize directly via rdflib standard Turtle serializer
+        return g.serialize(format="turtle")
 
     # -----------------------------------------------------------------------
-    # 2. Ontop Native OBDA Generator
+    # 2. W3C R2RML Generator (via rdflib.Graph)
+    # -----------------------------------------------------------------------
+    def generate_r2rml(self) -> str:
+        """Construct standard W3C R2RML mappings using native rdflib Graph primitives."""
+        rg = Graph()
+        rg.bind(self.prefix, self.REV)
+        rg.bind("rr", RR)
+
+        # 2a. Base Class Mappings
+        for class_name, cdef in self.spec.classes.items():
+            map_uri = URIRef(f"{self.ns}#{class_name}Map")
+
+            # rr:logicalTable [ rr:tableName "<table>" ]
+            log_table = BNode()
+            rg.add((log_table, RR.tableName, Literal(cdef.table)))
+            rg.add((map_uri, RR.logicalTable, log_table))
+
+            # rr:subjectMap [ rr:template "http://.../{pk}" ; rr:class :Class ]
+            sub_map = BNode()
+            template_str = f"{self.ns}{class_name.lower()}/{{{cdef.primary_key}}}"
+            rg.add((sub_map, RR.template, Literal(template_str)))
+            rg.add((sub_map, RR["class"], self.REV[class_name]))
+            rg.add((map_uri, RR.subjectMap, sub_map))
+
+            # rr:predicateObjectMap for each column property
+            for p_name in cdef.properties:
+                if p_name == cdef.primary_key:
+                    continue
+                pom = BNode()
+                rg.add((pom, RR.predicate, self.REV[p_name]))
+                om = BNode()
+                rg.add((om, RR.column, Literal(p_name)))
+                rg.add((pom, RR.objectMap, om))
+                rg.add((map_uri, RR.predicateObjectMap, pom))
+
+            # 2b. Subclass Mappings (with SQL filters)
+            for sub_name, sdef in cdef.subclasses.items():
+                sub_map_uri = URIRef(f"{self.ns}#{sub_name}Map")
+                sub_log_table = BNode()
+                sql_query = f"SELECT * FROM {cdef.table} WHERE {sdef.filter}"
+                rg.add((sub_log_table, RR.sqlQuery, Literal(sql_query)))
+                rg.add((sub_map_uri, RR.logicalTable, sub_log_table))
+
+                sub_subj_map = BNode()
+                rg.add((sub_subj_map, RR.template, Literal(template_str)))
+                rg.add((sub_subj_map, RR["class"], self.REV[sub_name]))
+                rg.add((sub_map_uri, RR.subjectMap, sub_subj_map))
+
+        # 2c. Relationship Mappings (Object Properties / Foreign Key Joins)
+        for rel_name, rdef in self.spec.relationships.items():
+            if rdef.source not in self.spec.classes or rdef.target not in self.spec.classes:
+                continue
+
+            src_class = self.spec.classes[rdef.source]
+            tgt_class = self.spec.classes[rdef.target]
+            src_pk = src_class.primary_key
+            tgt_pk = tgt_class.primary_key
+
+            rel_map_uri = URIRef(f"{self.ns}#{rel_name}Map")
+            rel_log_table = BNode()
+            join_sql = (
+                f"SELECT {src_class.table}.{src_pk}, {tgt_class.table}.{tgt_pk} "
+                f"FROM {src_class.table} JOIN {tgt_class.table} ON {rdef.join}"
+            )
+            rg.add((rel_log_table, RR.sqlQuery, Literal(join_sql)))
+            rg.add((rel_map_uri, RR.logicalTable, rel_log_table))
+
+            # Subject is source entity
+            src_sub_map = BNode()
+            rg.add((src_sub_map, RR.template, Literal(f"{self.ns}{rdef.source.lower()}/{{{src_pk}}}")))
+            rg.add((rel_map_uri, RR.subjectMap, src_sub_map))
+
+            # Object is target entity
+            rel_pom = BNode()
+            rg.add((rel_pom, RR.predicate, self.REV[rel_name]))
+            rel_om = BNode()
+            rg.add((rel_om, RR.template, Literal(f"{self.ns}{rdef.target.lower()}/{{{tgt_pk}}}")))
+            rg.add((rel_pom, RR.objectMap, rel_om))
+            rg.add((rel_map_uri, RR.predicateObjectMap, rel_pom))
+
+        return rg.serialize(format="turtle")
+
+    # -----------------------------------------------------------------------
+    # 3. Ontop Native OBDA Generator
     # -----------------------------------------------------------------------
     def generate_ontop_obda(self) -> str:
+        """Generate native Ontop .obda file (Ontop's proprietary configuration format)."""
         lines = [
             "[PrefixDeclaration]",
             f":\t\t{self.ns}",
@@ -150,7 +251,6 @@ class OntologyArtifactGenerator:
             "[MappingDeclaration] @collection [[",
         ]
 
-        mapping_idx = 1
         # Class Mappings
         for class_name, cdef in self.spec.classes.items():
             pk = cdef.primary_key
@@ -165,7 +265,6 @@ class OntologyArtifactGenerator:
                 f"source\t\tSELECT * FROM {cdef.table}",
                 "",
             ])
-            mapping_idx += 1
 
             # Subclasses with filters
             for sub_name, sdef in cdef.subclasses.items():
@@ -175,16 +274,21 @@ class OntologyArtifactGenerator:
                     f"source\t\tSELECT * FROM {cdef.table} WHERE {sdef.filter}",
                     "",
                 ])
-                mapping_idx += 1
 
         # Relationship Mappings
         for rel_name, rdef in self.spec.relationships.items():
+            if rdef.source not in self.spec.classes or rdef.target not in self.spec.classes:
+                continue
+
             src_class = self.spec.classes[rdef.source]
             tgt_class = self.spec.classes[rdef.target]
             src_pk = src_class.primary_key
             tgt_pk = tgt_class.primary_key
 
-            join_sql = f"SELECT {src_class.table}.{src_pk}, {tgt_class.table}.{tgt_pk} FROM {src_class.table} JOIN {tgt_class.table} ON {rdef.join}"
+            join_sql = (
+                f"SELECT {src_class.table}.{src_pk}, {tgt_class.table}.{tgt_pk} "
+                f"FROM {src_class.table} JOIN {tgt_class.table} ON {rdef.join}"
+            )
 
             lines.extend([
                 f"mappingId\tMAPPING-REL-{rel_name.upper()}",
@@ -192,45 +296,17 @@ class OntologyArtifactGenerator:
                 f"source\t\t{join_sql}",
                 "",
             ])
-            mapping_idx += 1
 
         lines.append("]]")
         return "\n".join(lines)
 
-    # -----------------------------------------------------------------------
-    # 3. W3C R2RML Generator
-    # -----------------------------------------------------------------------
-    def generate_r2rml(self) -> str:
-        lines = [
-            f"@prefix : <{self.ns}> .",
-            "@prefix rr: <http://www.w3.org/ns/r2rml#> .",
-            "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .",
-            "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
-            "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .",
-            "",
-        ]
 
-        for class_name, cdef in self.spec.classes.items():
-            pk = cdef.primary_key
-            lines.extend([
-                f"<#{class_name}Map>",
-                f'    rr:logicalTable [ rr:tableName "{cdef.table}" ] ;',
-                f'    rr:subjectMap [ rr:template "{self.ns}{class_name.lower()}/{{{pk}}}" ; rr:class :{class_name} ] ;',
-            ])
-
-            for p_name in cdef.properties:
-                if p_name == pk:
-                    continue
-                lines.extend([
-                    "    rr:predicateObjectMap [",
-                    f"        rr:predicate :{p_name} ;",
-                    f'        rr:objectMap [ rr:column "{p_name}" ]',
-                    "    ] ;",
-                ])
-
-            # Terminate statement
-            lines[-1] = lines[-1].rstrip(" ;") + " ."
-            lines.append("")
-
-        return "\n".join(lines)
-
+if __name__ == "__main__":
+    print("Compiling YAML Ontology into W3C Turtle (.ttl), OBDA (.obda), and R2RML (.r2rml.ttl)...")
+    spec = load_ontology_spec()
+    gen = OntologyArtifactGenerator(spec)
+    result = gen.generate_all()
+    print(f"[✓] Successfully compiled and verified:")
+    print(f"  • Turtle (.ttl):  {result['turtle_file']} ({result['validated_triples']} triples)")
+    print(f"  • R2RML (.r2rml): {result['r2rml_file']} ({result['r2rml_triples']} triples)")
+    print(f"  • Ontop (.obda):   {result['obda_file']}")
