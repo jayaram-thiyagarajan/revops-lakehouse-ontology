@@ -1,0 +1,89 @@
+[PrefixDeclaration]
+:		http://revops.org/ontology#
+owl:		http://www.w3.org/2002/07/owl#
+rdf:		http://www.w3.org/1999/02/22-rdf-syntax-ns#
+rdfs:		http://www.w3.org/2000/01/rdf-schema#
+xsd:		http://www.w3.org/2001/XMLSchema#
+
+[MappingDeclaration] @collection [[
+mappingId	MAPPING-CLASS-ACCOUNT
+target		:account/{account_id} a :Account ; :name {name} ; :domain {domain} ; :tier {tier} ; :industry {industry} ; :arr {arr} ; :health_score {health_score} ; :lifecycle_stage {lifecycle_stage} ; :num_employees {num_employees} ; :created_at {created_at} .
+source		SELECT * FROM accounts
+
+mappingId	MAPPING-SUBCLASS-ENTERPRISEACCOUNT
+target		:account/{account_id} a :EnterpriseAccount .
+source		SELECT * FROM accounts WHERE tier = 'Enterprise'
+
+mappingId	MAPPING-SUBCLASS-MIDMARKETACCOUNT
+target		:account/{account_id} a :MidMarketAccount .
+source		SELECT * FROM accounts WHERE tier = 'Mid-Market'
+
+mappingId	MAPPING-SUBCLASS-SMBACCOUNT
+target		:account/{account_id} a :SMBAccount .
+source		SELECT * FROM accounts WHERE tier = 'SMB'
+
+mappingId	MAPPING-CLASS-CONTACT
+target		:contact/{contact_id} a :Contact ; :account_id {account_id} ; :email {email} ; :first_name {first_name} ; :last_name {last_name} ; :title {title} ; :role {role} ; :is_primary {is_primary} ; :status {status} ; :created_at {created_at} .
+source		SELECT * FROM contacts
+
+mappingId	MAPPING-CLASS-OPPORTUNITY
+target		:opportunity/{deal_id} a :Opportunity ; :account_id {account_id} ; :deal_name {deal_name} ; :deal_type {deal_type} ; :stage {stage} ; :amount {amount} ; :close_date {close_date} ; :is_closed {is_closed} ; :is_won {is_won} ; :created_at {created_at} .
+source		SELECT * FROM opportunities
+
+mappingId	MAPPING-SUBCLASS-EXPANSIONDEAL
+target		:opportunity/{deal_id} a :ExpansionDeal .
+source		SELECT * FROM opportunities WHERE deal_type = 'Expansion'
+
+mappingId	MAPPING-SUBCLASS-OPENEXPANSIONDEAL
+target		:opportunity/{deal_id} a :OpenExpansionDeal .
+source		SELECT * FROM opportunities WHERE deal_type = 'Expansion' AND is_closed = false
+
+mappingId	MAPPING-SUBCLASS-NEWBUSINESSDEAL
+target		:opportunity/{deal_id} a :NewBusinessDeal .
+source		SELECT * FROM opportunities WHERE deal_type = 'New Business'
+
+mappingId	MAPPING-SUBCLASS-RENEWALDEAL
+target		:opportunity/{deal_id} a :RenewalDeal .
+source		SELECT * FROM opportunities WHERE deal_type = 'Renewal'
+
+mappingId	MAPPING-CLASS-CAMPAIGN
+target		:campaign/{campaign_id} a :Campaign ; :name {name} ; :channel {channel} ; :type {type} ; :status {status} ; :budget {budget} ; :start_date {start_date} ; :end_date {end_date} ; :created_at {created_at} .
+source		SELECT * FROM campaigns
+
+mappingId	MAPPING-CLASS-CAMPAIGNDAILYCOST
+target		:campaigndailycost/{cost_id} a :CampaignDailyCost ; :campaign_id {campaign_id} ; :date {date} ; :cost {cost} ; :impressions {impressions} ; :clicks {clicks} ; :created_at {created_at} .
+source		SELECT * FROM campaign_daily_costs
+
+mappingId	MAPPING-CLASS-CAMPAIGNTOUCH
+target		:campaigntouch/{touch_id} a :CampaignTouch ; :contact_id {contact_id} ; :campaign_id {campaign_id} ; :channel {channel} ; :touch_type {touch_type} ; :touch_time {touch_time} .
+source		SELECT * FROM campaign_touches
+
+mappingId	MAPPING-CLASS-PRODUCTEVENT
+target		:productevent/{event_id} a :ProductEvent ; :account_id {account_id} ; :user_id {user_id} ; :event_name {event_name} ; :feature_name {feature_name} ; :session_duration_seconds {session_duration_seconds} ; :event_time {event_time} .
+source		SELECT * FROM product_events
+
+mappingId	MAPPING-REL-HASCONTACT
+target		:account/{account_id} :hasContact :contact/{contact_id} .
+source		SELECT accounts.account_id, contacts.contact_id FROM accounts JOIN contacts ON accounts.account_id = contacts.account_id
+
+mappingId	MAPPING-REL-HASOPPORTUNITY
+target		:account/{account_id} :hasOpportunity :opportunity/{deal_id} .
+source		SELECT accounts.account_id, opportunities.deal_id FROM accounts JOIN opportunities ON accounts.account_id = opportunities.account_id
+
+mappingId	MAPPING-REL-HASTOUCHPOINT
+target		:contact/{contact_id} :hasTouchpoint :campaigntouch/{touch_id} .
+source		SELECT contacts.contact_id, campaign_touches.touch_id FROM contacts JOIN campaign_touches ON contacts.contact_id = campaign_touches.contact_id
+
+mappingId	MAPPING-REL-ATTRIBUTEDTOCAMPAIGN
+target		:campaigntouch/{touch_id} :attributedToCampaign :campaign/{campaign_id} .
+source		SELECT campaign_touches.touch_id, campaigns.campaign_id FROM campaign_touches JOIN campaigns ON campaign_touches.campaign_id = campaigns.campaign_id
+
+mappingId	MAPPING-REL-TRACKSDAILYCOST
+target		:campaign/{campaign_id} :tracksDailyCost :campaigndailycost/{cost_id} .
+source		SELECT campaigns.campaign_id, campaign_daily_costs.cost_id FROM campaigns JOIN campaign_daily_costs ON campaigns.campaign_id = campaign_daily_costs.campaign_id
+
+mappingId	MAPPING-REL-HASTELEMETRYEVENT
+target		:account/{account_id} :hasTelemetryEvent :productevent/{event_id} .
+source		SELECT accounts.account_id, product_events.event_id FROM accounts JOIN product_events ON accounts.account_id = product_events.account_id
+
+]]

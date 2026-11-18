@@ -64,7 +64,31 @@ The 7 core GTM tables are defined in [`src/warehouse/schemas.py`](file:///Users/
 .venv/bin/pytest -v
 ```
 
-### 3. Query Iceberg via DuckDB Interactive Shell or Python
+### 3. Query the Virtual Ontology Layer (SPARQL -> DuckDB Pushdown)
+```bash
+# Run the canonical ground-truth RevOps SPARQL query with lineage tracing
+.venv/bin/python scripts/run_ontology_query.py
+
+# Recompile the YAML ontology into formal W3C Turtle (.ttl), Ontop (.obda), and R2RML (.r2rml.ttl)
+.venv/bin/python scripts/run_ontology_query.py --compile-ontology
+```
+
+---
+
+## Virtual Ontology Structure
+
+The ontology is defined declaratively in [`ontology/revops_ontology.yaml`](file:///Users/jayaramthiyagarajan/code/revops-lakehouse-ontology/ontology/revops_ontology.yaml) and automatically compiled into standard W3C semantic artifacts:
+
+* [`ontology/revops_ontology.yaml`](file:///Users/jayaramthiyagarajan/code/revops-lakehouse-ontology/ontology/revops_ontology.yaml): Human-friendly declarative YAML defining classes, relationships, and metric formulas.
+* [`ontology/revops_ontology.ttl`](file:///Users/jayaramthiyagarajan/code/revops-lakehouse-ontology/ontology/revops_ontology.ttl): W3C OWL/Turtle ontology (289 verified RDF triples).
+* [`ontology/mappings.obda`](file:///Users/jayaramthiyagarajan/code/revops-lakehouse-ontology/ontology/mappings.obda): Ontop native OBDA mapping file for virtual graph pushdown.
+* [`ontology/mappings.r2rml.ttl`](file:///Users/jayaramthiyagarajan/code/revops-lakehouse-ontology/ontology/mappings.r2rml.ttl): W3C R2RML mapping specification.
+* [`src/ontology/sparql_compiler.py`](file:///Users/jayaramthiyagarajan/code/revops-lakehouse-ontology/src/ontology/sparql_compiler.py): Translates SPARQL queries directly into optimized DuckDB SQL over Iceberg tables.
+* [`src/ontology/engine.py`](file:///Users/jayaramthiyagarajan/code/revops-lakehouse-ontology/src/ontology/engine.py): High-level interface providing agent prompt context, query execution, and semantic lineage.
+
+---
+
+## Querying DuckDB Directly
 ```bash
 # Interactive DuckDB prompt over Iceberg views
 .venv/bin/python scripts/query.py

@@ -1,0 +1,241 @@
+@prefix : <http://revops.org/ontology#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<#AccountMap>
+    rr:logicalTable [ rr:tableName "accounts" ] ;
+    rr:subjectMap [ rr:template "http://revops.org/ontology#account/{account_id}" ; rr:class :Account ] ;
+    rr:predicateObjectMap [
+        rr:predicate :name ;
+        rr:objectMap [ rr:column "name" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :domain ;
+        rr:objectMap [ rr:column "domain" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :tier ;
+        rr:objectMap [ rr:column "tier" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :industry ;
+        rr:objectMap [ rr:column "industry" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :arr ;
+        rr:objectMap [ rr:column "arr" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :health_score ;
+        rr:objectMap [ rr:column "health_score" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :lifecycle_stage ;
+        rr:objectMap [ rr:column "lifecycle_stage" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :num_employees ;
+        rr:objectMap [ rr:column "num_employees" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :created_at ;
+        rr:objectMap [ rr:column "created_at" ]
+    ] .
+
+<#ContactMap>
+    rr:logicalTable [ rr:tableName "contacts" ] ;
+    rr:subjectMap [ rr:template "http://revops.org/ontology#contact/{contact_id}" ; rr:class :Contact ] ;
+    rr:predicateObjectMap [
+        rr:predicate :account_id ;
+        rr:objectMap [ rr:column "account_id" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :email ;
+        rr:objectMap [ rr:column "email" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :first_name ;
+        rr:objectMap [ rr:column "first_name" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :last_name ;
+        rr:objectMap [ rr:column "last_name" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :title ;
+        rr:objectMap [ rr:column "title" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :role ;
+        rr:objectMap [ rr:column "role" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :is_primary ;
+        rr:objectMap [ rr:column "is_primary" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :status ;
+        rr:objectMap [ rr:column "status" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :created_at ;
+        rr:objectMap [ rr:column "created_at" ]
+    ] .
+
+<#OpportunityMap>
+    rr:logicalTable [ rr:tableName "opportunities" ] ;
+    rr:subjectMap [ rr:template "http://revops.org/ontology#opportunity/{deal_id}" ; rr:class :Opportunity ] ;
+    rr:predicateObjectMap [
+        rr:predicate :account_id ;
+        rr:objectMap [ rr:column "account_id" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :deal_name ;
+        rr:objectMap [ rr:column "deal_name" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :deal_type ;
+        rr:objectMap [ rr:column "deal_type" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :stage ;
+        rr:objectMap [ rr:column "stage" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :amount ;
+        rr:objectMap [ rr:column "amount" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :close_date ;
+        rr:objectMap [ rr:column "close_date" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :is_closed ;
+        rr:objectMap [ rr:column "is_closed" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :is_won ;
+        rr:objectMap [ rr:column "is_won" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :created_at ;
+        rr:objectMap [ rr:column "created_at" ]
+    ] .
+
+<#CampaignMap>
+    rr:logicalTable [ rr:tableName "campaigns" ] ;
+    rr:subjectMap [ rr:template "http://revops.org/ontology#campaign/{campaign_id}" ; rr:class :Campaign ] ;
+    rr:predicateObjectMap [
+        rr:predicate :name ;
+        rr:objectMap [ rr:column "name" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :channel ;
+        rr:objectMap [ rr:column "channel" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :type ;
+        rr:objectMap [ rr:column "type" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :status ;
+        rr:objectMap [ rr:column "status" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :budget ;
+        rr:objectMap [ rr:column "budget" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :start_date ;
+        rr:objectMap [ rr:column "start_date" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :end_date ;
+        rr:objectMap [ rr:column "end_date" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :created_at ;
+        rr:objectMap [ rr:column "created_at" ]
+    ] .
+
+<#CampaignDailyCostMap>
+    rr:logicalTable [ rr:tableName "campaign_daily_costs" ] ;
+    rr:subjectMap [ rr:template "http://revops.org/ontology#campaigndailycost/{cost_id}" ; rr:class :CampaignDailyCost ] ;
+    rr:predicateObjectMap [
+        rr:predicate :campaign_id ;
+        rr:objectMap [ rr:column "campaign_id" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :date ;
+        rr:objectMap [ rr:column "date" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :cost ;
+        rr:objectMap [ rr:column "cost" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :impressions ;
+        rr:objectMap [ rr:column "impressions" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :clicks ;
+        rr:objectMap [ rr:column "clicks" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :created_at ;
+        rr:objectMap [ rr:column "created_at" ]
+    ] .
+
+<#CampaignTouchMap>
+    rr:logicalTable [ rr:tableName "campaign_touches" ] ;
+    rr:subjectMap [ rr:template "http://revops.org/ontology#campaigntouch/{touch_id}" ; rr:class :CampaignTouch ] ;
+    rr:predicateObjectMap [
+        rr:predicate :contact_id ;
+        rr:objectMap [ rr:column "contact_id" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :campaign_id ;
+        rr:objectMap [ rr:column "campaign_id" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :channel ;
+        rr:objectMap [ rr:column "channel" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :touch_type ;
+        rr:objectMap [ rr:column "touch_type" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :touch_time ;
+        rr:objectMap [ rr:column "touch_time" ]
+    ] .
+
+<#ProductEventMap>
+    rr:logicalTable [ rr:tableName "product_events" ] ;
+    rr:subjectMap [ rr:template "http://revops.org/ontology#productevent/{event_id}" ; rr:class :ProductEvent ] ;
+    rr:predicateObjectMap [
+        rr:predicate :account_id ;
+        rr:objectMap [ rr:column "account_id" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :user_id ;
+        rr:objectMap [ rr:column "user_id" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :event_name ;
+        rr:objectMap [ rr:column "event_name" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :feature_name ;
+        rr:objectMap [ rr:column "feature_name" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :session_duration_seconds ;
+        rr:objectMap [ rr:column "session_duration_seconds" ]
+    ] ;
+    rr:predicateObjectMap [
+        rr:predicate :event_time ;
+        rr:objectMap [ rr:column "event_time" ]
+    ] .

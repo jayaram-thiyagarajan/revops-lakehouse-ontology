@@ -1,0 +1,221 @@
+# ==============================================================================
+# Declarative RevOps GTM Ontology Specification
+# ==============================================================================
+# This specification bridges the Apache Iceberg GTM Lakehouse tables to
+# high-level business concepts, semantic relations, and deterministic metrics.
+# ==============================================================================
+
+ontology:
+  name: "RevOpsGTMOntology"
+  namespace: "http://revops.org/ontology#"
+  prefix: "revops"
+  description: "Zero-ETL RevOps Knowledge Graph mapping CRM, Marketing, and Product Telemetry."
+
+# ------------------------------------------------------------------------------
+# 1. Core Classes / Concepts
+# ------------------------------------------------------------------------------
+classes:
+  Account:
+    description: "Organization / Customer / Prospect entity in the GTM lifecycle."
+    table: "accounts"
+    primary_key: "account_id"
+    properties:
+      account_id: { type: "string", doc: "Unique identifier for Account" }
+      name: { type: "string", doc: "Account / Company name" }
+      domain: { type: "string", doc: "Company domain" }
+      tier: { type: "string", doc: "Enterprise, Mid-Market, or SMB" }
+      industry: { type: "string", doc: "Industry vertical" }
+      arr: { type: "decimal", doc: "Annual Recurring Revenue in USD" }
+      health_score: { type: "integer", doc: "Account health score (0-100)" }
+      lifecycle_stage: { type: "string", doc: "Prospect, Customer, Churned" }
+      num_employees: { type: "integer", doc: "Number of employees" }
+      created_at: { type: "timestamptz", doc: "Account creation timestamp" }
+    subclasses:
+      EnterpriseAccount:
+        filter: "tier = 'Enterprise'"
+        doc: "Enterprise tier accounts (ARR > $150k or employee count > 1000)"
+      MidMarketAccount:
+        filter: "tier = 'Mid-Market'"
+        doc: "Mid-market tier accounts"
+      SMBAccount:
+        filter: "tier = 'SMB'"
+        doc: "Small-to-medium business tier accounts"
+
+  Contact:
+    description: "Business contact / persona associated with an Account."
+    table: "contacts"
+    primary_key: "contact_id"
+    properties:
+      contact_id: { type: "string", doc: "Unique identifier for Contact" }
+      account_id: { type: "string", doc: "Foreign key to Account" }
+      email: { type: "string", doc: "Work email address" }
+      first_name: { type: "string", doc: "First name" }
+      last_name: { type: "string", doc: "Last name" }
+      title: { type: "string", doc: "Job title" }
+      role: { type: "string", doc: "Decision Maker, Champion, Influencer, End User" }
+      is_primary: { type: "boolean", doc: "Primary contact flag" }
+      status: { type: "string", doc: "Lifecycle status: Lead, MQL, SQL, Opportunity" }
+      created_at: { type: "timestamptz", doc: "Contact creation timestamp" }
+
+  Opportunity:
+    description: "CRM sales opportunity / pipeline deal."
+    table: "opportunities"
+    primary_key: "deal_id"
+    properties:
+      deal_id: { type: "string", doc: "Unique deal identifier" }
+      account_id: { type: "string", doc: "Foreign key to Account" }
+      deal_name: { type: "string", doc: "Opportunity deal name" }
+      deal_type: { type: "string", doc: "New Business, Expansion, Renewal" }
+      stage: { type: "string", doc: "Pipeline stage (Prospecting ... Closed Won)" }
+      amount: { type: "decimal", doc: "Deal value in USD" }
+      close_date: { type: "date", doc: "Target or actual close date" }
+      is_closed: { type: "boolean", doc: "Whether deal is finalized" }
+      is_won: { type: "boolean", doc: "Whether deal is won" }
+      created_at: { type: "timestamptz", doc: "Opportunity creation timestamp" }
+    subclasses:
+      ExpansionDeal:
+        filter: "deal_type = 'Expansion'"
+        doc: "Upsell / add-on deal on existing customer accounts"
+      OpenExpansionDeal:
+        filter: "deal_type = 'Expansion' AND is_closed = false"
+        doc: "Active in-flight expansion opportunity"
+      NewBusinessDeal:
+        filter: "deal_type = 'New Business'"
+        doc: "Initial contract acquisition deal"
+      RenewalDeal:
+        filter: "deal_type = 'Renewal'"
+        doc: "Subscription renewal deal"
+
+  Campaign:
+    description: "Marketing campaign across digital, outbound, and event channels."
+    table: "campaigns"
+    primary_key: "campaign_id"
+    properties:
+      campaign_id: { type: "string", doc: "Unique campaign identifier" }
+      name: { type: "string", doc: "Campaign name" }
+      channel: { type: "string", doc: "Paid Search, Webinar, Email, Outbound, Conference" }
+      type: { type: "string", doc: "Acquisition, Retention, Expansion, Brand" }
+      status: { type: "string", doc: "Active, Paused, Completed, Planned" }
+      budget: { type: "decimal", doc: "Allocated budget in USD" }
+      start_date: { type: "date", doc: "Campaign launch date" }
+      end_date: { type: "date", doc: "Campaign conclusion date" }
+      created_at: { type: "timestamptz", doc: "Creation timestamp" }
+
+  CampaignDailyCost:
+    description: "Daily marketing spend and engagement telemetry per campaign."
+    table: "campaign_daily_costs"
+    primary_key: "cost_id"
+    properties:
+      cost_id: { type: "string", doc: "Daily cost record identifier" }
+      campaign_id: { type: "string", doc: "Foreign key to Campaign" }
+      date: { type: "date", doc: "Calendar spend date" }
+      cost: { type: "decimal", doc: "Daily spend in USD" }
+      impressions: { type: "integer", doc: "Daily ad impressions" }
+      clicks: { type: "integer", doc: "Daily ad clicks" }
+      created_at: { type: "timestamptz", doc: "Record timestamp" }
+
+  CampaignTouch:
+    description: "Multi-touch marketing interaction attributed to a Contact."
+    table: "campaign_touches"
+    primary_key: "touch_id"
+    properties:
+      touch_id: { type: "string", doc: "Touchpoint identifier" }
+      contact_id: { type: "string", doc: "Foreign key to Contact" }
+      campaign_id: { type: "string", doc: "Foreign key to Campaign" }
+      channel: { type: "string", doc: "Touch channel" }
+      touch_type: { type: "string", doc: "First Touch, Lead Creation, Opportunity Influence" }
+      touch_time: { type: "timestamptz", doc: "Exact interaction timestamp" }
+
+  ProductEvent:
+    description: "Granular SaaS product usage telemetry for WAU and engagement."
+    table: "product_events"
+    primary_key: "event_id"
+    properties:
+      event_id: { type: "string", doc: "Event identifier" }
+      account_id: { type: "string", doc: "Foreign key to Account" }
+      user_id: { type: "string", doc: "Active user identifier" }
+      event_name: { type: "string", doc: "login, dashboard_view, report_exported, etc." }
+      feature_name: { type: "string", doc: "Product feature tag" }
+      session_duration_seconds: { type: "integer", doc: "Duration of session" }
+      event_time: { type: "timestamptz", doc: "Event timestamp" }
+
+# ------------------------------------------------------------------------------
+# 2. Semantic Relationships (Object Properties)
+# ------------------------------------------------------------------------------
+relationships:
+  hasContact:
+    source: "Account"
+    target: "Contact"
+    join: "accounts.account_id = contacts.account_id"
+    inverse: "belongsToAccount"
+    doc: "Connects an Account to its organizational contacts"
+
+  hasOpportunity:
+    source: "Account"
+    target: "Opportunity"
+    join: "accounts.account_id = opportunities.account_id"
+    inverse: "opportunityForAccount"
+    doc: "Connects an Account to its CRM sales opportunities"
+
+  hasTouchpoint:
+    source: "Contact"
+    target: "CampaignTouch"
+    join: "contacts.contact_id = campaign_touches.contact_id"
+    inverse: "touchpointOfContact"
+    doc: "Connects a Contact to multi-touch marketing interactions"
+
+  attributedToCampaign:
+    source: "CampaignTouch"
+    target: "Campaign"
+    join: "campaign_touches.campaign_id = campaigns.campaign_id"
+    inverse: "hasGeneratedTouch"
+    doc: "Links a touchpoint to its source marketing campaign"
+
+  tracksDailyCost:
+    source: "Campaign"
+    target: "CampaignDailyCost"
+    join: "campaigns.campaign_id = campaign_daily_costs.campaign_id"
+    inverse: "costForCampaign"
+    doc: "Associates daily spend records with a campaign"
+
+  hasTelemetryEvent:
+    source: "Account"
+    target: "ProductEvent"
+    join: "accounts.account_id = product_events.account_id"
+    inverse: "telemetryOfAccount"
+    doc: "Links granular product usage telemetry to an Account"
+
+# ------------------------------------------------------------------------------
+# 3. Deterministic Semantic Metrics
+# ------------------------------------------------------------------------------
+metrics:
+  weekly_active_users:
+    name: "WeeklyActiveUsers"
+    source_concept: "ProductEvent"
+    description: "Count of unique users who engaged with the product in a 7-day window."
+    sql_expression: "count(DISTINCT user_id)"
+    group_by: ["account_id", "date_trunc('week', event_time)"]
+
+  wau_drop_percentage:
+    name: "WAUDropPercentage"
+    source_concept: "ProductEvent"
+    description: "Percentage drop in average weekly active users between early Q4 (Oct) and late Q4 (Dec)."
+    parameters:
+      baseline_start: "2024-10-01"
+      baseline_end: "2024-10-31"
+      current_start: "2024-12-01"
+      current_end: "2024-12-31"
+    formula: "round((early_wau - late_wau) * 100.0 / early_wau, 1)"
+
+  net_dollar_retention:
+    name: "NetDollarRetention"
+    source_concept: "Account"
+    description: "NDR measure of revenue expansion vs churn over cohort baseline."
+    formula: "((starting_arr + expansion_arr - churn_arr) * 100.0) / starting_arr"
+
+  campaign_roi:
+    name: "CampaignROI"
+    source_concept: "Campaign"
+    description: "Return on marketing investment: (influenced won pipeline - spend) / spend."
+    formula: "round((won_pipeline - total_spend) * 100.0 / total_spend, 1)"
+
